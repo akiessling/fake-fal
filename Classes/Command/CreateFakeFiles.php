@@ -57,9 +57,7 @@ class CreateFakeFiles extends Command
                 $queryBuilder->expr()->eq('storage', $storageId),
                 $queryBuilder->expr()->like('identifier',
                     $queryBuilder->createNamedParameter($queryBuilder->escapeLikeWildcards($storagePath) . '%'))
-            )
-            ->orderBy('identifier')
-            ->execute()->fetchAll(PDO::FETCH_COLUMN);
+            )->orderBy('identifier')->executeQuery()->fetchAll(PDO::FETCH_COLUMN);
 
         foreach ($fileIdentifiers as $fileIdentifier) {
             // Require the storage to get the file,

@@ -27,18 +27,13 @@ class ListStorages extends Command
         $this->setDescription('List storages with fake fal mode status');
     }
 
-    /**
-     * @throws \Doctrine\DBAL\DBALException
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var QueryBuilder $queryBuilder */
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable('sys_file_storage');
 
-        $storages = $queryBuilder->select('uid', 'name', 'driver', 'tx_fakefal_enable')
-            ->from('sys_file_storage')
-            ->execute()->fetchAll();
+        $storages = $queryBuilder->select('uid', 'name', 'driver', 'tx_fakefal_enable')->from('sys_file_storage')->executeQuery()->fetchAllAssociative();
 
         foreach ($storages as &$storage) {
             $storage['tx_fakefal_enable'] = (bool) $storage['tx_fakefal_enable'] ? 'enabled' : 'disabled';

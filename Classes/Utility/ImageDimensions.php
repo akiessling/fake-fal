@@ -13,15 +13,11 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * @author Wolfgang Klinger <wk@plan2.net>
  */
-final class ImageDimensions implements SingletonInterface
+final readonly class ImageDimensions implements SingletonInterface
 {
-    private GraphicalFunctions $graphicalFunctions;
-
-    public function __construct(GraphicalFunctions $graphicalFunctions)
+    public function __construct(private GraphicalFunctions $graphicalFunctions)
     {
-        $this->graphicalFunctions = $graphicalFunctions;
     }
-
     public function write(string $filepath, int $width, int $height): void
     {
         $font = GeneralUtility::getFileAbsFileName('EXT:core/Resources/Private/Font/nimbus.ttf');
@@ -37,7 +33,6 @@ final class ImageDimensions implements SingletonInterface
             $this->graphicalFunctions->ImageWrite($image, $filepath);
         }
     }
-
     /**
      * Calculate font size based on font, image width and the text
      * so the text fits the image with some margin
@@ -67,7 +62,6 @@ final class ImageDimensions implements SingletonInterface
 
         return $fontSize < 12 ? 12 : (int) $fontSize;
     }
-
     /**
      * Calculate text position (centered)
      */

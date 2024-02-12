@@ -33,6 +33,6 @@ class FileSignature
     {
         $fileExtension = strtoupper($fileExtension);
 
-        return isset(self::$signatures[$fileExtension]) ? hex2bin(self::$signatures[$fileExtension]) : null;
+        return isset(self::$signatures[$fileExtension]) ? hex2bin((string) self::$signatures[$fileExtension]) : null;
     }
 }

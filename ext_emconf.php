@@ -7,7 +7,6 @@ $EM_CONF[$_EXTKEY] = [
     'author' => 'Wolfgang Klinger, Ioulia Kondratovitch, Martin Kutschker',
     'author_email' => 'wk@plan2.net',
     'state' => 'stable',
-    'clearCacheOnLoad' => 1,
     'author_company' => 'plan2net GmbH',
     'version' => '3.1.0',
     'constraints' => [
@@ -19,7 +18,5 @@ $EM_CONF[$_EXTKEY] = [
         ],
         'suggests' => [
         ],
-    ],
-    'suggests' => [
     ]
 ];

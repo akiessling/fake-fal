@@ -102,12 +102,7 @@ class LocalFakeDriver extends LocalDriver
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
         $fileData = $queryBuilder
             ->select('*')
-            ->from('sys_file')
-            ->where(
-                $queryBuilder->expr()->eq('storage', $queryBuilder->createNamedParameter((int) $this->storageUid)),
-                $queryBuilder->expr()->eq('identifier', $queryBuilder->createNamedParameter($fileIdentifier))
-            )
-            ->execute()->fetch(PDO::FETCH_ASSOC);
+            ->from('sys_file')->where($queryBuilder->expr()->eq('storage', $queryBuilder->createNamedParameter((int) $this->storageUid)), $queryBuilder->expr()->eq('identifier', $queryBuilder->createNamedParameter($fileIdentifier)))->executeQuery()->fetch(PDO::FETCH_ASSOC);
         if ($fileData) {
             /** @var ResourceFactory $resourceFactory */
             $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
@@ -144,11 +139,7 @@ class LocalFakeDriver extends LocalDriver
 
         return $queryBuilder
             ->select('type', 'modification_date')
-            ->from('sys_file')
-            ->where(
-                $queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($file->getUid()))
-            )
-            ->execute()->fetch(PDO::FETCH_ASSOC);
+            ->from('sys_file')->where($queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($file->getUid())))->executeQuery()->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -165,7 +156,7 @@ class LocalFakeDriver extends LocalDriver
 
         try {
             $filePath = $generator->generate($file, $filePath);
-        } catch (Exception $e) {
+        } catch (Exception) {
             // Ignore
         }
 
@@ -183,7 +174,7 @@ class LocalFakeDriver extends LocalDriver
         $fileSignature = FileSignature::getSignature($file->getExtension());
         if ($fileSignature) {
             $fp = fopen($targetFilePath, 'wb');
-            fwrite($fp, $fileSignature);
+            fwrite($fp, (string) $fileSignature);
             fclose($fp);
         }
 
@@ -201,9 +192,7 @@ class LocalFakeDriver extends LocalDriver
             ->update('sys_file')
             ->where(
                 $queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($file->getUid()))
-            )
-            ->set('tx_fakefal_fake', 1)
-            ->execute();
+            )->set('tx_fakefal_fake', 1)->executeStatement();
     }
 
     /**
@@ -244,7 +233,7 @@ class LocalFakeDriver extends LocalDriver
         if (!is_dir($absoluteFolderPath)) {
             try {
                 $this->createFakeFolder($absoluteFolderPath);
-            } catch (RuntimeException $e) {
+            } catch (RuntimeException) {
                 // Unable to create directory
                 return false;
             }
@@ -295,7 +284,7 @@ class LocalFakeDriver extends LocalDriver
     protected function calculateBasePathAndCreateMissingDirectories(array $configuration): string
     {
         if (!array_key_exists('basePath', $configuration) || empty($configuration['basePath'])) {
-            throw new InvalidConfigurationException('Configuration must contain base path.', 1346510477);
+            throw new InvalidConfigurationException('Configuration must contain base path.', 1_346_510_477);
         }
 
         if (!empty($configuration['pathType']) && 'relative' === $configuration['pathType']) {
@@ -313,7 +302,7 @@ class LocalFakeDriver extends LocalDriver
 
         $processingFolderPath = $this->getProcessingFolderForStorage($this->storageUid);
         // Check if this a relative or absolute path
-        if (0 !== strpos($processingFolderPath, '/')) {
+        if (!str_starts_with($processingFolderPath, '/')) {
             $processingFolderPath = rtrim($absoluteBasePath, '/') . '/' . $processingFolderPath;
         }
         if (!is_dir($processingFolderPath)) {
@@ -337,16 +326,12 @@ class LocalFakeDriver extends LocalDriver
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_storage');
         $path = (string) $queryBuilder
             ->select('processingfolder')
-            ->from('sys_file_storage')
-            ->where(
-                $queryBuilder->expr()->eq('uid', $storageId)
-            )
-            ->execute()->fetchColumn(0);
+            ->from('sys_file_storage')->where($queryBuilder->expr()->eq('uid', $storageId))->executeQuery()->fetchOne();
 
         if (!empty($path)) {
             // Check if this is a combined folder path
             $parts = GeneralUtility::trimExplode(':', $path);
-            if (2 === count($parts)) {
+            if (2 === (is_countable($parts) ? count($parts) : 0)) {
                 // First part is the numeric storage ID
                 $referencedStorageId = (int) $parts[0];
                 $path = $this->getBasePathForStorage($referencedStorageId) .
@@ -366,11 +351,7 @@ class LocalFakeDriver extends LocalDriver
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_storage');
         $configuration = (string) $queryBuilder
             ->select('configuration')
-            ->from('sys_file_storage')
-            ->where(
-                $queryBuilder->expr()->eq('uid', $storageId)
-            )
-            ->execute()->fetchColumn(0);
+            ->from('sys_file_storage')->where($queryBuilder->expr()->eq('uid', $storageId))->executeQuery()->fetchOne();
 
         /** @var FlexFormService $flexFormService */
         $flexFormService = GeneralUtility::makeInstance(FlexFormService::class);

@@ -47,13 +47,13 @@ class ResourceFactory extends \TYPO3\CMS\Core\Resource\ResourceFactory
         // This is done in all considered sub functions anyway
         $input = str_replace(Environment::getPublicPath() . '/', '', $input);
 
-        if (GeneralUtility::isFirstPartOfStr($input, 'file:')) {
+        if (\str_starts_with($input, 'file:')) {
             $input = substr($input, 5);
 
             return $this->retrieveFileOrFolderObject($input);
         }
         if (MathUtility::canBeInterpretedAsInteger($input)) {
-            return $this->getFileObject($input);
+            return $this->getFileObject((int) $input);
         }
         if (strpos($input, ':') > 0) {
             [$prefix] = explode(':', $input);
@@ -78,7 +78,7 @@ class ResourceFactory extends \TYPO3\CMS\Core\Resource\ResourceFactory
         // eliminate double slashes, /./ and /../
         $input = PathUtility::getCanonicalPath(ltrim($input, '/'));
         // Fix core bug, value is url encoded
-        $input = urldecode($input);
+        $input = urldecode((string) $input);
         // fake_fal: check for physical file (e.g. temporary assets like online media preview images)
         // and for files available in the database (that should be created)
         if (!empty($input) && (@is_file(Environment::getPublicPath() . '/' . $input) || $this->isFile($input))) {
@@ -93,12 +93,12 @@ class ResourceFactory extends \TYPO3\CMS\Core\Resource\ResourceFactory
         $originalPath = $path;
         foreach ($this->getLocalStorages() as $storage) {
             // Remove possible path prefix
-            $storageBasePath = rtrim($storage->getConfiguration()['basePath'], '/');
+            $storageBasePath = rtrim((string) $storage->getConfiguration()['basePath'], '/');
             $pathSite = Environment::getPublicPath();
-            if (0 === strpos($storageBasePath, $pathSite)) {
-                $storageBasePath = substr($storageBasePath, strlen($pathSite));
+            if (str_starts_with($storageBasePath, (string) $pathSite)) {
+                $storageBasePath = substr($storageBasePath, strlen((string) $pathSite));
             }
-            if (0 === strpos($originalPath, $storageBasePath)) {
+            if (str_starts_with($originalPath, $storageBasePath)) {
                 $path = substr($originalPath, strlen($storageBasePath));
             }
 
@@ -106,11 +106,8 @@ class ResourceFactory extends \TYPO3\CMS\Core\Resource\ResourceFactory
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file');
             if ((bool) $queryBuilder
                 ->count('uid')
-                ->from('sys_file')
-                ->where(
-                    $queryBuilder->expr()->like('identifier',
-                        $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($path)))
-                )->execute()->fetchColumn()) {
+                ->from('sys_file')->where($queryBuilder->expr()->like('identifier',
+                $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($path))))->executeQuery()->fetchOne()) {
                 return true;
             }
         }

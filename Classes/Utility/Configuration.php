@@ -18,7 +18,6 @@ class Configuration
     /**
      * Returns the whole extension configuration or a specific property
      *
-     * @param string|null $key
      *
      * @return array|string|null
      */
@@ -28,7 +27,7 @@ class Configuration
         $helper = GeneralUtility::makeInstance(ExtensionConfiguration::class);
         try {
             $configuration = $helper->get('fake_fal');
-        } catch (Exception $e) {
+        } catch (Exception) {
             $configuration = [];
         }
         if (is_string($key)) {

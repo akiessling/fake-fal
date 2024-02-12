@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Plan2net\FakeFal\Command;
 
+use TYPO3\CMS\Core\Resource\Exception\InsufficientFolderAccessPermissionsException;
+use TYPO3\CMS\Core\Resource\Exception\InvalidPathException;
+use TYPO3\CMS\Core\Resource\Exception\InsufficientUserPermissionsException;
+use TYPO3\CMS\Core\Resource\Exception\InsufficientFolderReadPermissionsException;
+use TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException;
 use Exception;
 use PDO;
 use Plan2net\FakeFal\Resource\Core\ResourceFactory;
@@ -41,13 +46,13 @@ final class ToggleFakeMode extends Command
         $countAffected = 0;
         $localStorageIds = $storageIds = $this->getAvailableLocalStorageIds();
         if (!empty($storageIdList)) {
-            $storageIds = explode(',', $storageIdList);
+            $storageIds = GeneralUtility::intExplode(',', (string) $storageIdList, true);
         }
         foreach ($storageIds as $storageId) {
             if (in_array($storageId, $localStorageIds, true)) {
                 try {
                     $this->deleteProcessedFilesAndFolders($storageId);
-                } catch (Exception $e) {
+                } catch (Exception) {
                     // Ignore
                 }
             }
@@ -56,16 +61,10 @@ final class ToggleFakeMode extends Command
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
                 ->getQueryBuilderForTable('sys_file_storage');
             $status = (int) $queryBuilder->select('tx_fakefal_enable')
-                ->from('sys_file_storage')
-                ->where(
-                    $queryBuilder->expr()->eq('uid', $storageId)
-                )->execute()->fetchColumn(0);
+                ->from('sys_file_storage')->where($queryBuilder->expr()->eq('uid', $storageId))->executeQuery()->fetchOne();
 
             $countAffected += $queryBuilder->update('sys_file_storage')
-                ->set('tx_fakefal_enable', 1 === $status ? 0 : 1)
-                ->where(
-                    $queryBuilder->expr()->eq('uid', $storageId)
-                )->execute();
+                ->set('tx_fakefal_enable', 1 === $status ? 0 : 1)->where($queryBuilder->expr()->eq('uid', $storageId))->executeStatement();
         }
         $output->writeln($countAffected . ' affected storages updated.' . PHP_EOL);
 
@@ -81,16 +80,15 @@ final class ToggleFakeMode extends Command
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable('sys_file_storage');
 
-        return $this->getLocalStorageStatement($queryBuilder)->execute()->fetchAll(PDO::FETCH_COLUMN);
+        return $this->getLocalStorageStatement($queryBuilder)->executeQuery()->fetchFirstColumn();
     }
 
     /**
-     * @throws \TYPO3\CMS\Core\Resource\Exception\InsufficientFolderAccessPermissionsException
-     * @throws \TYPO3\CMS\Core\Resource\Exception\InvalidPathException
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \TYPO3\CMS\Core\Resource\Exception\InsufficientUserPermissionsException
-     * @throws \TYPO3\CMS\Core\Resource\Exception\InsufficientFolderReadPermissionsException
-     * @throws \TYPO3\CMS\Core\Resource\Exception\FileOperationErrorException
+     * @throws InsufficientFolderAccessPermissionsException
+     * @throws InvalidPathException
+     * @throws InsufficientUserPermissionsException
+     * @throws InsufficientFolderReadPermissionsException
+     * @throws FileOperationErrorException
      */
     private function deleteProcessedFilesAndFolders(int $storageId): void
     {
@@ -111,11 +109,7 @@ final class ToggleFakeMode extends Command
         /** @var QueryBuilder $queryBuilder */
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_processedfile');
         $queryBuilder
-            ->delete('sys_file_processedfile')
-            ->where(
-                $queryBuilder->expr()->eq('storage', $storageId)
-            )
-            ->execute();
+            ->delete('sys_file_processedfile')->where($queryBuilder->expr()->eq('storage', $storageId))->executeStatement();
     }
 
     private function getLocalStorageStatement(QueryBuilder $queryBuilder): QueryBuilder
