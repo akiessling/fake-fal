@@ -11,4 +11,12 @@ defined('TYPO3') or die('Access denied');
             'className' => \Plan2net\FakeFal\Resource\Core\ResourceStorage::class
         ];
     }
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fake_fal'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fake_fal'] ?? [];
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fake_fal']['fileTemplates'] = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fake_fal']['fileTemplates'] ?? [];
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fake_fal']['fileTemplates'] = array_merge(
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fake_fal']['fileTemplates'],
+        [
+            'PDF' => 'EXT:fake_fal/Resources/Private/TemplateFiles/test.pdf',
+        ]
+    );
 })();

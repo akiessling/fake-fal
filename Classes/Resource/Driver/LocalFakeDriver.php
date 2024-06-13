@@ -10,6 +10,7 @@ use Plan2net\FakeFal\Resource\Generator\ImageGeneratorFactory;
 use Plan2net\FakeFal\Resource\Generator\LocalFakeImageGenerator;
 use Plan2net\FakeFal\Utility\Configuration;
 use Plan2net\FakeFal\Utility\FileSignature;
+use Plan2net\FakeFal\Utility\FileTemplate;
 use RuntimeException;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -171,11 +172,16 @@ class LocalFakeDriver extends LocalDriver
     protected function createFakeDocument(File $file): string
     {
         $targetFilePath = $this->getAbsolutePath($file->getIdentifier());
+        $fileContentPath = FileTemplate::getTemplateFilePath($file->getExtension());
+        if ($fileContentPath) {
+            copy($fileContentPath, $targetFilePath);
+        } else {
         $fileSignature = FileSignature::getSignature($file->getExtension());
         if ($fileSignature) {
             $fp = fopen($targetFilePath, 'wb');
             fwrite($fp, (string) $fileSignature);
             fclose($fp);
+            }
         }
 
         return $targetFilePath;
